@@ -6,6 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Kelvin Bartilad">
 
 <title>Physics 215 Project Report</title>
 <style>
@@ -55,10 +56,30 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="classify_leaves_files/libs/clipboard/clipboard.min.js"></script>
+<script src="classify_leaves_files/libs/clipboard/clipboard.min.js"></script>
 <script src="classify_leaves_files/libs/quarto-html/quarto.js" type="module"></script>
 <script src="classify_leaves_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="classify_leaves_files/libs/quarto-html/popper.min.js"></script>
@@ -69,17 +90,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="classify_leaves_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="classify_leaves_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="classify_leaves_files/libs/bootstrap/bootstrap-4a2670dfb28fb78b585f3de5b1943c0d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
-
-<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
 
 </head>
 
-<body class="fullcontent quarto-light">
+<body class="quarto-light">
 
 <div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
-
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#motivation" id="toc-motivation" class="nav-link active" data-scroll-target="#motivation">Motivation</a></li>
+  <li><a href="#dynamic-time-warping-dtw" id="toc-dynamic-time-warping-dtw" class="nav-link" data-scroll-target="#dynamic-time-warping-dtw">Dynamic Time Warping (DTW)</a></li>
+  <li><a href="#shapelets-classification" id="toc-shapelets-classification" class="nav-link" data-scroll-target="#shapelets-classification">Shapelets Classification</a></li>
+  <li><a href="#comparison-of-the-two-classifiers" id="toc-comparison-of-the-two-classifiers" class="nav-link" data-scroll-target="#comparison-of-the-two-classifiers">Comparison of the two classifiers</a>
+  <ul class="collapse">
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
@@ -91,6 +123,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div class="quarto-title-meta">
 
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Kelvin Bartilad </p>
+          </div>
+  </div>
     
   
     
@@ -110,483 +148,220 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> accuracy_score</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyts.metrics <span class="im">import</span> dtw</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> classification_report</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sktime.classification.shapelet_based <span class="im">import</span> ShapeletTransformClassifier</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.ensemble <span class="im">import</span> RandomForestClassifier</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> ConfusionMatrixDisplay, confusion_matrix</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Load train and test data</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>train_data <span class="op">=</span> np.genfromtxt(<span class="st">'../data/OSULeaf_TRAIN.txt'</span>)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>test_data <span class="op">=</span> np.genfromtxt(<span class="st">'../data/OSULeaf_TEST.txt'</span>)</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Split the data and the labels</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> train_data[:,<span class="dv">1</span>:]</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>y_train <span class="op">=</span> train_data[:,<span class="dv">0</span>]</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> test_data[:,<span class="dv">1</span>:]</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>y_test <span class="op">=</span> test_data[:,<span class="dv">0</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyts.classification <span class="im">import</span> KNeighborsClassifier</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> classification_report</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sktime.classification.shapelet_based <span class="im">import</span> ShapeletTransformClassifier</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.ensemble <span class="im">import</span> RandomForestClassifier</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> ConfusionMatrixDisplay, confusion_matrix</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Load train and test data</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>train_data <span class="op">=</span> np.genfromtxt(<span class="st">'../data/OSULeaf_TRAIN.txt'</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>test_data <span class="op">=</span> np.genfromtxt(<span class="st">'../data/OSULeaf_TEST.txt'</span>)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Split the data and the labels</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> train_data[:,<span class="dv">1</span>:]</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>y_train <span class="op">=</span> train_data[:,<span class="dv">0</span>]</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> test_data[:,<span class="dv">1</span>:]</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>y_test <span class="op">=</span> test_data[:,<span class="dv">0</span>]</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co">#Defining the classes used in the data set</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>classes <span class="op">=</span> np.unique(y_train)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<section id="motivation" class="level1">
-<h1>Motivation</h1>
-<div id="2f513d59-26a6-4ad9-9e7c-ccb82fc57df4" class="cell" data-execution_count="53">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>dtw_dict <span class="op">=</span> {}</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>dtw_pred <span class="op">=</span> []</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>classes <span class="op">=</span> np.unique(y_train)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> test_seq <span class="kw">in</span> X_test:</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> CLASS <span class="kw">in</span> classes:</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        train_class <span class="op">=</span> X_train[np.where(y_train<span class="op">==</span>CLASS)]</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        dtw_score <span class="op">=</span> []</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> train_seq <span class="kw">in</span> train_class:</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>            <span class="cf">with</span> warnings.catch_warnings(): <span class="co">#FutureWarning ignore</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>                warnings.simplefilter(<span class="st">'ignore'</span>)</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>                dtw_score.append(dtw(test_seq, train_seq))</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        dtw_dict[CLASS] <span class="op">=</span> np.mean(dtw_score)</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    dtw_pred.append(<span class="bu">min</span>(dtw_dict, key<span class="op">=</span>dtw_dict.get))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
-<div id="13267447-5b01-4dc1-9994-fa924f91930a" class="cell" data-execution_count="76">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>dtw_accu <span class="op">=</span> accuracy_score(y_test, dtw_pred)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
-<div id="06ada80b-af93-48c9-b7c4-70e7bd80a19e" class="cell" data-execution_count="81">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>cm <span class="op">=</span> confusion_matrix(y_test, dtw_pred, labels <span class="op">=</span> classes)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>cm_display <span class="op">=</span> ConfusionMatrixDisplay(cm, display_labels <span class="op">=</span> classes).plot()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-display">
-<div>
+<section id="motivation" class="level2">
+<h2 class="anchored" data-anchor-id="motivation">Motivation</h2>
+<p>The outline of a leaf is one of its most distinctive and consistent features, often more informative than color or texture, especially for species identification. Leaf margins — whether they are serrated, lobed, smooth, or compound — carry key taxonomic information. While computer vision techniques do exist that can analyze the outline of images using edge detection, we can also parametrize the outline to turn it into a 1D signal. This is typically done by tracing the contour of the leaf and measuring properties such as the radial distance from the centroid or curvature at each point along the edge. The result is a 1D signal that preserves the overall shape and fine structural features of the leaf margin. This work takes the 1D signal from already processed outlines from <span class="citation" data-cites="gandhi2002content">Gandhi (<a href="#ref-gandhi2002content" role="doc-biblioref">2002</a>)</span> and checks two classification methods: K-Nearest Neighbor Classifier using Dynamic Time Warping as a distance metric, and Shapelet Transform Classifier.</p>
+<div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="classify_leaves_files/figure-html/cell-5-output-1.png" class="img-fluid figure-img"></p>
+<p><img src="leaf_outline.webp" class="img-fluid figure-img"></p>
+<figcaption>Sample of leaf outline turning into a 1D time series</figcaption>
 </figure>
-</div>
-</div>
-</div>
-<div id="d9d262a0-c435-4dc3-832a-b3062d743061" class="cell" data-execution_count="61">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the classifier</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>clf <span class="op">=</span> ShapeletTransformClassifier(estimator<span class="op">=</span>RandomForestClassifier(), </span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                                  n_shapelet_samples<span class="op">=</span><span class="dv">1000</span>,</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                                  max_shapelets<span class="op">=</span><span class="dv">6</span>,</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                                  max_shapelet_length<span class="op">=</span><span class="dv">20</span>,</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                                  batch_size<span class="op">=</span><span class="dv">50</span>,</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>                                  random_state<span class="op">=</span><span class="dv">42</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
-<div id="043faeb0-973c-4a6a-8a3f-56e6510645f3" class="cell" data-execution_count="62">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Train the model</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>clf.fit(X_train, y_train)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-display" data-execution_count="62">
-<style>#sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d {
-    /* Definition of color scheme common for light and dark mode */
-    --sklearn-color-text: black;
-    --sklearn-color-line: gray;
-    /* Definition of color scheme for objects */
-    --sklearn-color-level-0: #fff5e6;
-    --sklearn-color-level-1: #f6e4d2;
-    --sklearn-color-level-2: #ffe0b3;
-    --sklearn-color-level-3: chocolate;
-
-    /* Specific color for light theme */
-    --sklearn-color-text-on-default-background: var(--theme-code-foreground, var(--jp-content-font-color1, black));
-    --sklearn-color-background: var(--theme-background, var(--jp-layout-color0, white));
-    --sklearn-color-border-box: var(--theme-code-foreground, var(--jp-content-font-color1, black));
-    --sklearn-color-icon: #696969;
-
-    @media (prefers-color-scheme: dark) {
-      /* Redefinition of color scheme for dark theme */
-      --sklearn-color-text-on-default-background: var(--theme-code-foreground, var(--jp-content-font-color1, white));
-      --sklearn-color-background: var(--theme-background, var(--jp-layout-color0, #111));
-      --sklearn-color-border-box: var(--theme-code-foreground, var(--jp-content-font-color1, white));
-      --sklearn-color-icon: #878787;
-    }
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d {
-    color: var(--sklearn-color-text);
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d pre {
-    padding: 0;
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d input.sk-hidden--visually {
-    border: 0;
-    clip: rect(1px 1px 1px 1px);
-    clip: rect(1px, 1px, 1px, 1px);
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    padding: 0;
-    position: absolute;
-    width: 1px;
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-dashed-wrapped {
-    border: 1px dashed var(--sklearn-color-line);
-    margin: 0 0.4em 0.5em 0.4em;
-    box-sizing: border-box;
-    padding-bottom: 0.4em;
-    background-color: var(--sklearn-color-background);
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-container {
-    /* jupyter's `normalize.less` sets `[hidden] { display: none; }`
-       but bootstrap.min.css set `[hidden] { display: none !important; }`
-       so we also need the `!important` here to be able to override the
-       default hidden behavior on the sphinx rendered scikit-learn.org.
-       See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
-    display: inline-block !important;
-    position: relative;
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-text-repr-fallback {
-    display: none;
-  }
-
-  div.sk-parallel-item,
-  div.sk-serial,
-  div.sk-item {
-    /* draw centered vertical line to link estimators */
-    background-image: linear-gradient(var(--sklearn-color-text-on-default-background), var(--sklearn-color-text-on-default-background));
-    background-size: 2px 100%;
-    background-repeat: no-repeat;
-    background-position: center center;
-  }
-
-  /* Parallel-specific style estimator block */
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-parallel-item::after {
-    content: "";
-    width: 100%;
-    border-bottom: 2px solid var(--sklearn-color-text-on-default-background);
-    flex-grow: 1;
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-parallel {
-    display: flex;
-    align-items: stretch;
-    justify-content: center;
-    background-color: var(--sklearn-color-background);
-    position: relative;
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-parallel-item {
-    display: flex;
-    flex-direction: column;
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-parallel-item:first-child::after {
-    align-self: flex-end;
-    width: 50%;
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-parallel-item:last-child::after {
-    align-self: flex-start;
-    width: 50%;
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-parallel-item:only-child::after {
-    width: 0;
-  }
-
-  /* Serial-specific style estimator block */
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-serial {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: var(--sklearn-color-background);
-    padding-right: 1em;
-    padding-left: 1em;
-  }
-
-
-  /* Toggleable style: style used for estimator/Pipeline/ColumnTransformer box that is
-  clickable and can be expanded/collapsed.
-  - Pipeline and ColumnTransformer use this feature and define the default style
-  - Estimators will overwrite some part of the style using the `sk-estimator` class
-  */
-
-  /* Pipeline and ColumnTransformer style (default) */
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-toggleable {
-    /* Default theme specific background. It is overwritten whether we have a
-    specific estimator or a Pipeline/ColumnTransformer */
-    background-color: var(--sklearn-color-background);
-  }
-
-  /* Toggleable label */
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d label.sk-toggleable__label {
-    cursor: pointer;
-    display: block;
-    width: 100%;
-    margin-bottom: 0;
-    padding: 0.5em;
-    box-sizing: border-box;
-    text-align: center;
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d label.sk-toggleable__label-arrow:before {
-    /* Arrow on the left of the label */
-    content: "▸";
-    float: left;
-    margin-right: 0.25em;
-    color: var(--sklearn-color-icon);
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d label.sk-toggleable__label-arrow:hover:before {
-    color: var(--sklearn-color-text);
-  }
-
-  /* Toggleable content - dropdown */
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-toggleable__content {
-    max-height: 0;
-    max-width: 0;
-    overflow: hidden;
-    text-align: left;
-    background-color: var(--sklearn-color-level-0);
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-toggleable__content pre {
-    margin: 0.2em;
-    border-radius: 0.25em;
-    color: var(--sklearn-color-text);
-    background-color: var(--sklearn-color-level-0);
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d input.sk-toggleable__control:checked~div.sk-toggleable__content {
-    /* Expand drop-down */
-    max-height: 200px;
-    max-width: 100%;
-    overflow: auto;
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {
-    content: "▾";
-  }
-
-  /* Pipeline/ColumnTransformer-specific style */
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {
-    color: var(--sklearn-color-text);
-    background-color: var(--sklearn-color-level-2);
-  }
-
-  /* Estimator-specific style */
-
-  /* Colorize estimator box */
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
-    /* unfitted */
-    background-color: var(--sklearn-color-level-2);
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-label label.sk-toggleable__label,
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-label label {
-    /* The background is the default theme color */
-    color: var(--sklearn-color-text-on-default-background);
-  }
-
-  /* On hover, darken the color of the background */
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-label:hover label.sk-toggleable__label {
-    color: var(--sklearn-color-text);
-    background-color: var(--sklearn-color-level-2);
-  }
-
-  /* Estimator label */
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-label label {
-    font-family: monospace;
-    font-weight: bold;
-    display: inline-block;
-    line-height: 1.2em;
-  }
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-label-container {
-    text-align: center;
-  }
-
-  /* Estimator-specific */
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-estimator {
-    font-family: monospace;
-    border: 1px dotted var(--sklearn-color-border-box);
-    border-radius: 0.25em;
-    box-sizing: border-box;
-    margin-bottom: 0.5em;
-    background-color: var(--sklearn-color-level-0);
-  }
-
-  /* on hover */
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d div.sk-estimator:hover {
-    background-color: var(--sklearn-color-level-2);
-  }
-
-  /* Specification for estimator info */
-
-  .sk-estimator-doc-link,
-  a:link.sk-estimator-doc-link,
-  a:visited.sk-estimator-doc-link {
-    float: right;
-    font-size: smaller;
-    line-height: 1em;
-    font-family: monospace;
-    background-color: var(--sklearn-color-background);
-    border-radius: 1em;
-    height: 1em;
-    width: 1em;
-    text-decoration: none !important;
-    margin-left: 1ex;
-    border: var(--sklearn-color-level-1) 1pt solid;
-    color: var(--sklearn-color-level-1);
-  }
-
-  /* On hover */
-  div.sk-estimator:hover .sk-estimator-doc-link:hover,
-  .sk-estimator-doc-link:hover,
-  div.sk-label-container:hover .sk-estimator-doc-link:hover,
-  .sk-estimator-doc-link:hover {
-    background-color: var(--sklearn-color-level-3);
-    color: var(--sklearn-color-background);
-    text-decoration: none;
-  }
-
-  /* Span, style for the box shown on hovering the info icon */
-  .sk-estimator-doc-link span {
-    display: none;
-    z-index: 9999;
-    position: relative;
-    font-weight: normal;
-    right: .2ex;
-    padding: .5ex;
-    margin: .5ex;
-    width: min-content;
-    min-width: 20ex;
-    max-width: 50ex;
-    color: var(--sklearn-color-text);
-    box-shadow: 2pt 2pt 4pt #999;
-    background: var(--sklearn-color-level-0);
-    border: .5pt solid var(--sklearn-color-level-3);
-  }
-
-  .sk-estimator-doc-link:hover span {
-    display: block;
-  }
-
-  /* "?"-specific style due to the `<a>` HTML tag */
-
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d a.estimator_doc_link {
-    float: right;
-    font-size: 1rem;
-    line-height: 1em;
-    font-family: monospace;
-    background-color: var(--sklearn-color-background);
-    border-radius: 1rem;
-    height: 1rem;
-    width: 1rem;
-    text-decoration: none;
-    color: var(--sklearn-color-level-1);
-    border: var(--sklearn-color-level-1) 1pt solid;
-  }
-
-  /* On hover */
-  #sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d a.estimator_doc_link:hover {
-    background-color: var(--sklearn-color-level-3);
-    color: var(--sklearn-color-background);
-    text-decoration: none;
-  }
-</style><div id="sk-76d6f4b1-2523-4cc2-97de-bc63370b5a8d" class="sk-top-container"><div class="sk-text-repr-fallback"><pre>ShapeletTransformClassifier(batch_size=50, estimator=RandomForestClassifier(),
-                            max_shapelet_length=20, max_shapelets=6,
-                            n_shapelet_samples=1000, random_state=42)</pre><b>Please rerun this cell to show the HTML repr or trust the notebook.</b></div><div class="sk-container" hidden=""><div class="sk-item sk-dashed-wrapped"><div class="sk-label-container"><div class="sk-label sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="UUID('25a67aa6-2691-4336-ac33-a2c63b5cf009')" type="checkbox"><label for="UUID('25a67aa6-2691-4336-ac33-a2c63b5cf009')" class="sk-toggleable__label sk-toggleable__label-arrow">ShapeletTransformClassifier<a class="sk-estimator-doc-link" rel="noreferrer" target="_blank" href="https://www.sktime.net/en/v0.36.0/api_reference/auto_generated/sktime.classification.shapelet_based.ShapeletTransformClassifier.html">?<span>Documentation for ShapeletTransformClassifier</span></a></label><div class="sk-toggleable__content"><pre>ShapeletTransformClassifier(batch_size=50, estimator=RandomForestClassifier(),
-                            max_shapelet_length=20, max_shapelets=6,
-                            n_shapelet_samples=1000, random_state=42)</pre></div></div></div><div class="sk-parallel"><div class="sk-parallel-item"><div class="sk-item"><div class="sk-label-container"><div class="sk-label sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="UUID('22affaa8-003d-40f5-bee0-92c5763c1005')" type="checkbox"><label for="UUID('22affaa8-003d-40f5-bee0-92c5763c1005')" class="sk-toggleable__label sk-toggleable__label-arrow">estimator: RandomForestClassifier</label><div class="sk-toggleable__content"><pre>RandomForestClassifier()</pre></div></div></div><div class="sk-serial"><div class="sk-item"><div class="sk-estimator sk-toggleable"><input class="sk-toggleable__control sk-hidden--visually" id="UUID('e538c1f4-76e9-4651-8906-25c5681e2938')" type="checkbox"><label for="UUID('e538c1f4-76e9-4651-8906-25c5681e2938')" class="sk-toggleable__label sk-toggleable__label-arrow">RandomForestClassifier<a class="sk-estimator-doc-link" rel="noreferrer" target="_blank" href="https://scikit-learn.org/1.6/modules/generated/sklearn.ensemble.RandomForestClassifier.html">?<span>Documentation for RandomForestClassifier</span></a></label><div class="sk-toggleable__content"><pre>RandomForestClassifier()</pre></div></div></div></div></div></div></div></div></div></div>
-</div>
-</div>
-<div id="97a45631-ab8d-4c85-9493-163ddde0fd02" class="cell" data-execution_count="63">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Predict and evaluate</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>y_pred <span class="op">=</span> clf.predict(X_test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
-<div id="cac50b54-201b-4c94-9405-1d8214cad02a" class="cell" data-execution_count="64">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>cm <span class="op">=</span> confusion_matrix(y_test, y_pred)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>cm_display <span class="op">=</span> ConfusionMatrixDisplay(cm).plot()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="classify_leaves_files/figure-html/cell-9-output-1.png" class="img-fluid figure-img"></p>
-</figure>
-</div>
-</div>
-</div>
-<div id="4c3e37fd-87d9-4408-9c48-d9a5597df52f" class="cell" data-execution_count="65">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>accuracy_score(y_test, y_pred)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-display" data-execution_count="65">
-<pre><code>0.5743801652892562</code></pre>
-</div>
-</div>
-<div id="a8f1c665-4877-4f8f-abae-e5165a39c5ec" class="cell" data-execution_count="67">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>s_class <span class="op">=</span> np.arange(<span class="dv">1</span>,<span class="dv">21</span>)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>accuracy <span class="op">=</span> []</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n <span class="kw">in</span> s_class:</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    clf <span class="op">=</span> ShapeletTransformClassifier(estimator<span class="op">=</span>RandomForestClassifier(), </span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>                                  n_shapelet_samples<span class="op">=</span><span class="dv">1000</span>,</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>                                  max_shapelets<span class="op">=</span><span class="dv">6</span><span class="op">*</span>n,</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>                                  max_shapelet_length<span class="op">=</span><span class="dv">20</span>,</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>                                  batch_size<span class="op">=</span><span class="dv">50</span>,</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>                                  random_state<span class="op">=</span><span class="dv">42</span>)</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    clf.fit(X_train, y_train)</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    y_pred <span class="op">=</span> clf.predict(X_test)</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    accuracy.append(accuracy_score(y_test, y_pred))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
-<div id="51fc5008-7b26-4b7b-a0c3-bcdee8c00e4b" class="cell" data-execution_count="78">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>plt.bar(s_class,accuracy, color <span class="op">=</span> <span class="st">'gray'</span>)<span class="op">;</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>plt.xticks(s_class)<span class="op">;</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Shapelets per class"</span>)</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Accuracy"</span>)</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>plt.axhline(y<span class="op">=</span>dtw_accu, color<span class="op">=</span><span class="st">'k'</span>, linestyle<span class="op">=</span><span class="st">'--'</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="classify_leaves_files/figure-html/cell-12-output-1.png" class="img-fluid figure-img"></p>
-</figure>
-</div>
-</div>
-</div>
-<div id="6407ea69-4fd9-4b5b-bb43-384f7c8e8d84" class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> corrupt_data(X, prop):</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> array <span class="kw">in</span> X:</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 </section>
+<section id="dynamic-time-warping-dtw" class="level2">
+<h2 class="anchored" data-anchor-id="dynamic-time-warping-dtw">Dynamic Time Warping (DTW)</h2>
+<p>Dynamic Time Warping (DTW) is a flexible distance metric that compares sequences while allowing for non-linear time shifts [#dtwreference]. Unlike Euclidean distance, which requires sequences to be aligned, DTW warps the time axis to find the best match — ideal for comparing our 1D leaf outlines as the closed shape naturally results in a cyclical signal. This means that we do not have to align each leaf when taking the outline as the algorithm will align the signals to minimize distance. We use a K-Nearest Neigbors (KNN) classifier which measures the distance between our test data and their k-nearest neighbors to see which class the most neighbors fall into.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="dtw_example_ecg-1.png" class="img-fluid figure-img"></p>
+<figcaption>Example of Dynamic Time Warping performed on ECG signals. Source: https://minimizeregret.com/note/2023/12/12/stop-using-dtw/</figcaption>
+</figure>
+</div>
+<p>For this method we need to tune a hyper-parameter for this classifier which is the kth nearest neighbor to consider. We can see from the plot that the accuracy actually goes down as we increase k which is due to the fact that we only cluster in one dimension which means we end up</p>
+<div id="4cbe6b71-7190-455f-a744-b38f4f7e6ed9" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>n_neigh <span class="op">=</span> np.arange(<span class="dv">1</span>,<span class="dv">21</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>n_accuracy <span class="op">=</span> []</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n <span class="kw">in</span> n_neigh:</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    dtw_clf <span class="op">=</span> KNeighborsClassifier(n_neighbors<span class="op">=</span>n, metric <span class="op">=</span> <span class="st">'dtw'</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    dtw_clf.fit(X_train, y_train)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> warnings.catch_warnings(): <span class="co">#FutureWarning ignore</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        warnings.simplefilter(<span class="st">'ignore'</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        dtw_pred <span class="op">=</span> dtw_clf.predict(X_test)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    n_accuracy.append(accuracy_score(y_test, dtw_pred))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="cell" data-execution_count="4">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>plt.bar(n_neigh,n_accuracy, color <span class="op">=</span> <span class="st">'gray'</span>)<span class="op">;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>plt.xticks(n_neigh)<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Number of neighbors considered"</span>)<span class="op">;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Accuracy"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div id="fig-ktune" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="4">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ktune-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div id="fig-ktune-1" class="cell-output cell-output-display quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="4">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-ktune-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<pre><code>Text(0, 0.5, 'Accuracy')</code></pre>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-ktune-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Bar plot of accuracy as the number of neighbors considered increases.
+</figcaption>
+</figure>
+</div>
+<div class="cell-output cell-output-display">
+<div id="fig-ktune-2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-ktune-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="classify_leaves_files/figure-html/fig-ktune-output-2.png" id="fig-ktune-2" class="img-fluid figure-img" data-ref-parent="fig-ktune">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-ktune-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b)
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-ktune-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1
+</figcaption>
+</figure>
+</div>
+</div>
+</section>
+<section id="shapelets-classification" class="level2">
+<h2 class="anchored" data-anchor-id="shapelets-classification">Shapelets Classification</h2>
+<p>Shapelets work by identifying subsequences within time series that are most informative for distinguishing between classes. Rather than comparing entire leaf outlines directly, the algorithm learns a set of shapelets that frequently occur in one class and not others. During classification, each new time series (leaf outline) is compared to the learned shapelets, and distances to these shapelets are used as input features for a standard classifier.</p>
+<div id="a8f1c665-4877-4f8f-abae-e5165a39c5ec" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>s_class <span class="op">=</span> np.arange(<span class="dv">1</span>,<span class="dv">21</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>s_accuracy <span class="op">=</span> []</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n <span class="kw">in</span> s_class:</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    clf <span class="op">=</span> ShapeletTransformClassifier(estimator<span class="op">=</span>RandomForestClassifier(), </span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                                  n_shapelet_samples<span class="op">=</span><span class="dv">1000</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                                  max_shapelets<span class="op">=</span><span class="bu">len</span>(classes)<span class="op">*</span>n,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>                                  max_shapelet_length<span class="op">=</span><span class="dv">20</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                                  batch_size<span class="op">=</span><span class="dv">50</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                                  random_state<span class="op">=</span><span class="dv">42</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    clf.fit(X_train, y_train)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    shp_pred <span class="op">=</span> clf.predict(X_test)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    s_accuracy.append(accuracy_score(y_test, shp_pred))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>The hyperparameter to optimize here is the number of shapelets per class which can be interpreted in the terms of PCA as the number of features you need to extract from the data to define a class archetype.</p>
+<div id="744e3123-e1c0-4f13-81f8-a7094e8af3dc" class="cell" data-execution_count="5">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>plt.bar(s_class,s_accuracy, color <span class="op">=</span> <span class="st">'gray'</span>)<span class="op">;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>plt.xticks(s_class)<span class="op">;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Shapelets per class"</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Accuracy"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display" data-execution_count="5">
+<pre><code>Text(0, 0.5, 'Accuracy')</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="classify_leaves_files/figure-html/cell-6-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="comparison-of-the-two-classifiers" class="level2">
+<h2 class="anchored" data-anchor-id="comparison-of-the-two-classifiers">Comparison of the two classifiers</h2>
+<div id="0617a655-2c82-4efe-a7f4-3a66d245a30c" class="cell" data-execution_count="7">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>dtw_clf <span class="op">=</span> KNeighborsClassifier(n_neighbors<span class="op">=</span><span class="dv">3</span>, metric <span class="op">=</span> <span class="st">'dtw'</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>dtw_clf.fit(X_train, y_train)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> warnings.catch_warnings(): <span class="co">#FutureWarning ignore</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    warnings.simplefilter(<span class="st">'ignore'</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    dtw_pred <span class="op">=</span> dtw_clf.predict(X_test)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>shp_clf <span class="op">=</span> ShapeletTransformClassifier(estimator<span class="op">=</span>RandomForestClassifier(), </span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>                                  n_shapelet_samples<span class="op">=</span><span class="dv">1000</span>,</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>                                  max_shapelets<span class="op">=</span><span class="bu">len</span>(classes)<span class="op">*</span><span class="dv">6</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>                                  max_shapelet_length<span class="op">=</span><span class="dv">20</span>,</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>                                  batch_size<span class="op">=</span><span class="dv">50</span>,</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>                                  random_state<span class="op">=</span><span class="dv">42</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>shp_clf.fit(X_train, y_train)</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>shp_pred <span class="op">=</span> shp_clf.predict(X_test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div id="cell-fig-cm" class="cell" data-execution_count="17">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">5</span>))</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>dtw_acc <span class="op">=</span> accuracy_score(y_test, dtw_pred)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>shp_acc <span class="op">=</span> accuracy_score(y_test, shp_pred)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>dtw_cm <span class="op">=</span> confusion_matrix(y_test, dtw_pred, labels <span class="op">=</span> classes)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>shp_cm <span class="op">=</span> confusion_matrix(y_test, shp_pred, labels <span class="op">=</span> classes)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>dtw_cm_display <span class="op">=</span> ConfusionMatrixDisplay(dtw_cm, display_labels <span class="op">=</span> classes).plot(ax<span class="op">=</span>axes[<span class="dv">0</span>], cmap<span class="op">=</span><span class="st">'Blues'</span>, colorbar<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>shp_cm_display <span class="op">=</span> ConfusionMatrixDisplay(shp_cm, display_labels <span class="op">=</span> classes).plot(ax<span class="op">=</span>axes[<span class="dv">1</span>], cmap<span class="op">=</span><span class="st">'Greens'</span>, colorbar<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="ss">f"Dynamic Time Warping. Accuracy: </span><span class="sc">{</span>dtw_acc<span class="sc">:.3f}</span><span class="ss">"</span>)<span class="op">;</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="ss">f"Shapelet Transform. Accuracy: </span><span class="sc">{</span>shp_acc<span class="sc">:.3f}</span><span class="ss">"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-cm" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="classify_leaves_files/figure-html/fig-cm-output-1.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Confusion matrix of the two different classification methods.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div id="6407ea69-4fd9-4b5b-bb43-384f7c8e8d84" class="cell" data-execution_count="14">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> corrupt_data(X, corruption_ratio):</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    X_corrupted <span class="op">=</span> X.copy()</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    n_samples, ts_length <span class="op">=</span> X.shape</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    n_total <span class="op">=</span> n_samples <span class="op">*</span> ts_length</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    n_corrupt <span class="op">=</span> <span class="bu">int</span>(n_total <span class="op">*</span> corruption_ratio)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    indices <span class="op">=</span> np.random.choice(n_total, size<span class="op">=</span>n_corrupt, replace<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> idx <span class="kw">in</span> indices:</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        i, j <span class="op">=</span> <span class="bu">divmod</span>(idx, ts_length)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>        X_corrupted[i, j] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> X_corrupted</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="references" class="level3 unnumbered">
 
-</main>
+
+</section>
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-gandhi2002content" class="csl-entry" role="listitem">
+Gandhi, Ashit. 2002. <span>“Content-Based Image Retrieval: Plant Species Identification.”</span> <em>Oregon State University: Corvallis, OR, USA</em>.
+</div>
+</div></section></div></main>
 <!-- /main column -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
