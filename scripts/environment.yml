@@ -306,4 +306,6 @@ dependencies:
   - zipp=3.21.0=pyhd8ed1ab_1
   - zstandard=0.23.0=py312h66e93f0_2
   - zstd=1.5.7=hb8e6e7a_2
+  - pip:
+      - quarto-cli==1.7.31
 prefix: /home/jovyan/.conda-envs/shapelets
