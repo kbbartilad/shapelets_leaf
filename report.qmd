@@ -1,8 +1,0 @@
----
-title: "Physics 215 Project Report"
-format:
-    html:
-        code-fold: true
-jupyter: python3
----
-
