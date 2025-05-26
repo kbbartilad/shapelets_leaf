@@ -105,10 +105,9 @@ div.csl-indent {
   <li><a href="#motivation" id="toc-motivation" class="nav-link active" data-scroll-target="#motivation">Motivation</a></li>
   <li><a href="#dynamic-time-warping-dtw" id="toc-dynamic-time-warping-dtw" class="nav-link" data-scroll-target="#dynamic-time-warping-dtw">Dynamic Time Warping (DTW)</a></li>
   <li><a href="#shapelets-classification" id="toc-shapelets-classification" class="nav-link" data-scroll-target="#shapelets-classification">Shapelets Classification</a></li>
-  <li><a href="#comparison-of-the-two-classifiers" id="toc-comparison-of-the-two-classifiers" class="nav-link" data-scroll-target="#comparison-of-the-two-classifiers">Comparison of the two classifiers</a>
-  <ul class="collapse">
+  <li><a href="#comparison-of-the-two-classifiers" id="toc-comparison-of-the-two-classifiers" class="nav-link" data-scroll-target="#comparison-of-the-two-classifiers">Comparison of the two classifiers</a></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
-  </ul></li>
   </ul>
 </nav>
 </div>
@@ -174,6 +173,12 @@ div.csl-indent {
 <p>The outline of a leaf is one of its most distinctive and consistent features, often more informative than color or texture, especially for species identification. Leaf margins — whether they are serrated, lobed, smooth, or compound — carry key taxonomic information. While computer vision techniques do exist that can analyze the outline of images using edge detection, we can also parametrize the outline to turn it into a 1D signal. This is typically done by tracing the contour of the leaf and measuring properties such as the radial distance from the centroid or curvature at each point along the edge. The result is a 1D signal that preserves the overall shape and fine structural features of the leaf margin. This work takes the 1D signal from already processed outlines from <span class="citation" data-cites="gandhi2002content">Gandhi (<a href="#ref-gandhi2002content" role="doc-biblioref">2002</a>)</span> and checks two classification methods: K-Nearest Neighbor Classifier using Dynamic Time Warping as a distance metric, and Shapelet Transform Classifier.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
+<p><img src="class_samples.png" class="img-fluid figure-img"></p>
+<figcaption>Sample of each class of leaf to identify</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
 <p><img src="leaf_outline.webp" class="img-fluid figure-img"></p>
 <figcaption>Sample of leaf outline turning into a 1D time series</figcaption>
 </figure>
@@ -188,11 +193,10 @@ div.csl-indent {
 <figcaption>Example of Dynamic Time Warping performed on ECG signals. Source: https://minimizeregret.com/note/2023/12/12/stop-using-dtw/</figcaption>
 </figure>
 </div>
-<p>For this method we need to tune a hyper-parameter for this classifier which is the kth nearest neighbor to consider. We can see from the plot that the accuracy actually goes down as we increase k which is due to the fact that we only cluster in one dimension which means we end up</p>
 <div id="4cbe6b71-7190-455f-a744-b38f4f7e6ed9" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>n_neigh <span class="op">=</span> np.arange(<span class="dv">1</span>,<span class="dv">21</span>)</span>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>n_neigh <span class="op">=</span> np.arange(<span class="dv">1</span>,<span class="dv">11</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>n_accuracy <span class="op">=</span> []</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n <span class="kw">in</span> n_neigh:</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    dtw_clf <span class="op">=</span> KNeighborsClassifier(n_neighbors<span class="op">=</span>n, metric <span class="op">=</span> <span class="st">'dtw'</span>)</span>
@@ -203,7 +207,8 @@ div.csl-indent {
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    n_accuracy.append(accuracy_score(y_test, dtw_pred))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div class="cell" data-execution_count="4">
+<p>For this method we need to tune a hyper-parameter for this classifier which is the kth nearest neighbor to consider. We can see from the plot that the accuracy actually goes down as we increase k which is due to the fact that DTW uses the whole signal when comparing sequences. This means that any noise present within the signal has the same significance as the actual signal which makes the method sensitive to noise.</p>
+<div id="cell-fig-ktune" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>plt.bar(n_neigh,n_accuracy, color <span class="op">=</span> <span class="st">'gray'</span>)<span class="op">;</span></span>
@@ -211,75 +216,57 @@ div.csl-indent {
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Number of neighbors considered"</span>)<span class="op">;</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Accuracy"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div id="fig-ktune" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="4">
+<div class="cell-output cell-output-display">
+<div id="fig-ktune" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-ktune-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div id="fig-ktune-1" class="cell-output cell-output-display quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="4">
-<figure class="quarto-float quarto-subfloat-fig figure">
-<div aria-describedby="fig-ktune-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<pre><code>Text(0, 0.5, 'Accuracy')</code></pre>
+<img src="classify_leaves_files/figure-html/fig-ktune-output-1.png" class="img-fluid figure-img">
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-ktune-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-(a) Bar plot of accuracy as the number of neighbors considered increases.
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ktune-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Bar plot of accuracy as the number of neighbors considered increases.
 </figcaption>
 </figure>
 </div>
-<div class="cell-output cell-output-display">
-<div id="fig-ktune-2" class="quarto-float quarto-figure quarto-figure-center anchored">
-<figure class="quarto-float quarto-subfloat-fig figure">
-<div aria-describedby="fig-ktune-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="classify_leaves_files/figure-html/fig-ktune-output-2.png" id="fig-ktune-2" class="img-fluid figure-img" data-ref-parent="fig-ktune">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-ktune-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-(b)
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-ktune-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1
-</figcaption>
-</figure>
 </div>
 </div>
 </section>
 <section id="shapelets-classification" class="level2">
 <h2 class="anchored" data-anchor-id="shapelets-classification">Shapelets Classification</h2>
 <p>Shapelets work by identifying subsequences within time series that are most informative for distinguishing between classes. Rather than comparing entire leaf outlines directly, the algorithm learns a set of shapelets that frequently occur in one class and not others. During classification, each new time series (leaf outline) is compared to the learned shapelets, and distances to these shapelets are used as input features for a standard classifier.</p>
-<div id="a8f1c665-4877-4f8f-abae-e5165a39c5ec" class="cell" data-execution_count="3">
+<div id="a8f1c665-4877-4f8f-abae-e5165a39c5ec" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>s_class <span class="op">=</span> np.arange(<span class="dv">1</span>,<span class="dv">21</span>)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>s_accuracy <span class="op">=</span> []</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n <span class="kw">in</span> s_class:</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    clf <span class="op">=</span> ShapeletTransformClassifier(estimator<span class="op">=</span>RandomForestClassifier(), </span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                                  n_shapelet_samples<span class="op">=</span><span class="dv">1000</span>,</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                                  max_shapelets<span class="op">=</span><span class="bu">len</span>(classes)<span class="op">*</span>n,</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>                                  max_shapelet_length<span class="op">=</span><span class="dv">20</span>,</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                                  batch_size<span class="op">=</span><span class="dv">50</span>,</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                                  random_state<span class="op">=</span><span class="dv">42</span>)</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    clf.fit(X_train, y_train)</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    shp_pred <span class="op">=</span> clf.predict(X_test)</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    s_accuracy.append(accuracy_score(y_test, shp_pred))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>s_class <span class="op">=</span> np.arange(<span class="dv">1</span>,<span class="dv">11</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>s_accuracy <span class="op">=</span> []</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n <span class="kw">in</span> s_class:</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    clf <span class="op">=</span> ShapeletTransformClassifier(estimator<span class="op">=</span>RandomForestClassifier(), </span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>                                  n_shapelet_samples<span class="op">=</span><span class="dv">1000</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                                  max_shapelets<span class="op">=</span><span class="bu">len</span>(classes)<span class="op">*</span>n,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                                  max_shapelet_length<span class="op">=</span><span class="dv">20</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>                                  batch_size<span class="op">=</span><span class="dv">50</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    clf.fit(X_train, y_train)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    shp_pred <span class="op">=</span> clf.predict(X_test)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    s_accuracy.append(accuracy_score(y_test, shp_pred))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>The hyperparameter to optimize here is the number of shapelets per class which can be interpreted in the terms of PCA as the number of features you need to extract from the data to define a class archetype.</p>
-<div id="744e3123-e1c0-4f13-81f8-a7094e8af3dc" class="cell" data-execution_count="5">
+<p>The hyperparameter to optimize here is the number of shapelets per class which can be interpreted in the terms of PCA as the number of features you need to extract from the data to define a class archetype. As seen in the figure below, the accuracy of the shapelets method increases as we increase the number of shapelets per class. While setting the maximum shapelets per class to be as high as possible would seem to also maximize the accuracy, we also observe from the figure that the increase in accuracy slows down after 3 shapelets per class. This means that we only require 3 features per class to classify our test data which are subsequences 20 timesteps long. This points to the advantage of shapelets over DTW in that we can identify the most significant subsequences for classification instead of having to take the entire subsequence everytime. This saves on computation as when running the code, the DTW classifier runs significantly longer than the shapelets classifier.</p>
+<div id="cell-fig-stune" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>plt.bar(s_class,s_accuracy, color <span class="op">=</span> <span class="st">'gray'</span>)<span class="op">;</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>plt.xticks(s_class)<span class="op">;</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Shapelets per class"</span>)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Accuracy"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>plt.bar(s_class,s_accuracy, color <span class="op">=</span> <span class="st">'gray'</span>)<span class="op">;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>plt.xticks(s_class)<span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Shapelets per class"</span>)<span class="op">;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Accuracy"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="5">
-<pre><code>Text(0, 0.5, 'Accuracy')</code></pre>
-</div>
 <div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="classify_leaves_files/figure-html/cell-6-output-2.png" class="img-fluid figure-img"></p>
+<div id="fig-stune" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-stune-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="classify_leaves_files/figure-html/fig-stune-output-1.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-stune-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Bar plot of accuracy as the number of shapelets pre class increases.
+</figcaption>
 </figure>
 </div>
 </div>
@@ -290,38 +277,38 @@ Figure&nbsp;1
 <div id="0617a655-2c82-4efe-a7f4-3a66d245a30c" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>dtw_clf <span class="op">=</span> KNeighborsClassifier(n_neighbors<span class="op">=</span><span class="dv">3</span>, metric <span class="op">=</span> <span class="st">'dtw'</span>)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>dtw_clf.fit(X_train, y_train)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> warnings.catch_warnings(): <span class="co">#FutureWarning ignore</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    warnings.simplefilter(<span class="st">'ignore'</span>)</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    dtw_pred <span class="op">=</span> dtw_clf.predict(X_test)</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>shp_clf <span class="op">=</span> ShapeletTransformClassifier(estimator<span class="op">=</span>RandomForestClassifier(), </span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>                                  n_shapelet_samples<span class="op">=</span><span class="dv">1000</span>,</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>                                  max_shapelets<span class="op">=</span><span class="bu">len</span>(classes)<span class="op">*</span><span class="dv">6</span>,</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>                                  max_shapelet_length<span class="op">=</span><span class="dv">20</span>,</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>                                  batch_size<span class="op">=</span><span class="dv">50</span>,</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>                                  random_state<span class="op">=</span><span class="dv">42</span>)</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>shp_clf.fit(X_train, y_train)</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>shp_pred <span class="op">=</span> shp_clf.predict(X_test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>dtw_clf <span class="op">=</span> KNeighborsClassifier(n_neighbors<span class="op">=</span><span class="dv">3</span>, metric <span class="op">=</span> <span class="st">'dtw'</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>dtw_clf.fit(X_train, y_train)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> warnings.catch_warnings(): <span class="co">#FutureWarning ignore</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    warnings.simplefilter(<span class="st">'ignore'</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    dtw_pred <span class="op">=</span> dtw_clf.predict(X_test)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>shp_clf <span class="op">=</span> ShapeletTransformClassifier(estimator<span class="op">=</span>RandomForestClassifier(), </span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>                                  n_shapelet_samples<span class="op">=</span><span class="dv">1000</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>                                  max_shapelets<span class="op">=</span><span class="bu">len</span>(classes)<span class="op">*</span><span class="dv">9</span>,</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>                                  max_shapelet_length<span class="op">=</span><span class="dv">20</span>,</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>                                  batch_size<span class="op">=</span><span class="dv">50</span>)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>shp_clf.fit(X_train, y_train)</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>shp_pred <span class="op">=</span> shp_clf.predict(X_test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="cell-fig-cm" class="cell" data-execution_count="17">
+<p>To compare the two classifiers, we first look at their confusion matrix which is a matrix that tells us how many predicted labels match the true labels for each class. From our results, we can already see that the shapelets transform method has higher accuracy with fewer wrong predictions compared to the DTW method that makes more frequent errors in classifying the different leaves. It should be noted that both methods struggle in identifying leaves belonging to class 6 which is the California Black Oak. This could be due to the outline of the leaves sharing many similar features with the other plant species.</p>
+<div id="cell-fig-cm" class="cell" data-execution_count="8">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">5</span>))</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>dtw_acc <span class="op">=</span> accuracy_score(y_test, dtw_pred)</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>shp_acc <span class="op">=</span> accuracy_score(y_test, shp_pred)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>dtw_cm <span class="op">=</span> confusion_matrix(y_test, dtw_pred, labels <span class="op">=</span> classes)</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>shp_cm <span class="op">=</span> confusion_matrix(y_test, shp_pred, labels <span class="op">=</span> classes)</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>dtw_cm_display <span class="op">=</span> ConfusionMatrixDisplay(dtw_cm, display_labels <span class="op">=</span> classes).plot(ax<span class="op">=</span>axes[<span class="dv">0</span>], cmap<span class="op">=</span><span class="st">'Blues'</span>, colorbar<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>shp_cm_display <span class="op">=</span> ConfusionMatrixDisplay(shp_cm, display_labels <span class="op">=</span> classes).plot(ax<span class="op">=</span>axes[<span class="dv">1</span>], cmap<span class="op">=</span><span class="st">'Greens'</span>, colorbar<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="ss">f"Dynamic Time Warping. Accuracy: </span><span class="sc">{</span>dtw_acc<span class="sc">:.3f}</span><span class="ss">"</span>)<span class="op">;</span></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="ss">f"Shapelet Transform. Accuracy: </span><span class="sc">{</span>shp_acc<span class="sc">:.3f}</span><span class="ss">"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">5</span>))</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>dtw_acc <span class="op">=</span> accuracy_score(y_test, dtw_pred)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>shp_acc <span class="op">=</span> accuracy_score(y_test, shp_pred)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>dtw_cm <span class="op">=</span> confusion_matrix(y_test, dtw_pred, labels <span class="op">=</span> classes)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>shp_cm <span class="op">=</span> confusion_matrix(y_test, shp_pred, labels <span class="op">=</span> classes)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>dtw_cm_display <span class="op">=</span> ConfusionMatrixDisplay(dtw_cm, display_labels <span class="op">=</span> classes).plot(ax<span class="op">=</span>axes[<span class="dv">0</span>], cmap<span class="op">=</span><span class="st">'Blues'</span>, colorbar<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>shp_cm_display <span class="op">=</span> ConfusionMatrixDisplay(shp_cm, display_labels <span class="op">=</span> classes).plot(ax<span class="op">=</span>axes[<span class="dv">1</span>], cmap<span class="op">=</span><span class="st">'Greens'</span>, colorbar<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="ss">f"Dynamic Time Warping. Accuracy: </span><span class="sc">{</span>dtw_acc<span class="sc">:.3f}</span><span class="ss">"</span>)<span class="op">;</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="ss">f"Shapelet Transform. Accuracy: </span><span class="sc">{</span>shp_acc<span class="sc">:.3f}</span><span class="ss">"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-cm" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -330,31 +317,83 @@ Figure&nbsp;1
 <img src="classify_leaves_files/figure-html/fig-cm-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;2: Confusion matrix of the two different classification methods.
+Figure&nbsp;3: Confusion matrix of the two different classification methods.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<div id="6407ea69-4fd9-4b5b-bb43-384f7c8e8d84" class="cell" data-execution_count="14">
+<p>Another comparison to make is to check how resilient the methods or when the signal is tampered or corrupted. In this work, we simulate corrupting the signal by randomly setting a portion of the signal to zero which simulates a signal interupption. We increase this portion from 0 to 1 in order to observe how quickly the accuracy of each method decreases as more of the signal is removed.</p>
+<div id="6407ea69-4fd9-4b5b-bb43-384f7c8e8d84" class="cell" data-execution_count="9">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> corrupt_data(X, corruption_ratio):</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    X_corrupted <span class="op">=</span> X.copy()</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    n_samples, ts_length <span class="op">=</span> X.shape</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    n_total <span class="op">=</span> n_samples <span class="op">*</span> ts_length</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    n_corrupt <span class="op">=</span> <span class="bu">int</span>(n_total <span class="op">*</span> corruption_ratio)</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    indices <span class="op">=</span> np.random.choice(n_total, size<span class="op">=</span>n_corrupt, replace<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> idx <span class="kw">in</span> indices:</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        i, j <span class="op">=</span> <span class="bu">divmod</span>(idx, ts_length)</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>        X_corrupted[i, j] <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> X_corrupted</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> corrupt_data(X, corruption_ratio):</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    X_corrupted <span class="op">=</span> X.copy()</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    n_samples, ts_length <span class="op">=</span> X.shape</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    n_total <span class="op">=</span> n_samples <span class="op">*</span> ts_length</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    n_corrupt <span class="op">=</span> <span class="bu">int</span>(n_total <span class="op">*</span> corruption_ratio)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    indices <span class="op">=</span> np.random.choice(n_total, size<span class="op">=</span>n_corrupt, replace<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> idx <span class="kw">in</span> indices:</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        i, j <span class="op">=</span> <span class="bu">divmod</span>(idx, ts_length)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>        X_corrupted[i, j] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> X_corrupted</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<section id="references" class="level3 unnumbered">
-
-
+<div id="6994fbcd-f53e-4b9a-8fea-70c7909046de" class="cell" data-execution_count="12">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>shp_accuracy <span class="op">=</span> []</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>dtw_accuracy <span class="op">=</span> []</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>corruption_ratios <span class="op">=</span> np.linspace(<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">10</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ratio <span class="kw">in</span> corruption_ratios:</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    X_corrupted <span class="op">=</span> corrupt_data(X_test, corruption_ratio<span class="op">=</span>ratio)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    s_pred <span class="op">=</span> shp_clf.predict(X_corrupted)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> warnings.catch_warnings(): <span class="co">#FutureWarning ignore</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>        warnings.simplefilter(<span class="st">'ignore'</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>        d_pred <span class="op">=</span> dtw_clf.predict(X_corrupted)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    dtw_accuracy.append(accuracy_score(y_test,d_pred))</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    shp_accuracy.append(accuracy_score(y_test, s_pred))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Looking at the plots, we notice that the Shapelet Transform method falls off sharply as the proportion of data corrupted increases while the decrease in accuracy for DTW is slower. This is because our method for corrupting the signal amounts to removing portions of the signal which affects each method differently. For the shapelets method, removing portions of the signal is tantamount to removing features from the signal which could be significant in differentiating between different classes. On the other hand, the DTW method does not differentiate between signal and noise and so the removal of parts of the raw signal is likely to remove equal amounts of true signal and noise which would not affect the distance measured using DTW much. This eventually decreases the accuracy as at the limit of the entire signal being removed, the classification becomes a measure of amplitude which is equal for all test data and is tantamount to a random selection.</p>
+<div id="cell-fig-noise" class="cell" data-execution_count="13">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">5</span>))</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].plot(corruption_ratios, dtw_accuracy)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="st">"Proportion of data corrupted"</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"Accuracy"</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylim(<span class="dv">0</span>,<span class="dv">1</span>)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"Dynamic Time Warping"</span>)<span class="op">;</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].plot(corruption_ratios, shp_accuracy)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="st">"Proportion of data corrupted"</span>)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"Accuracy"</span>)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylim(<span class="dv">0</span>,<span class="dv">1</span>)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Shapelet Transform"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div id="fig-noise" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-noise-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="classify_leaves_files/figure-html/fig-noise-output-1.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-noise-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Plot of accuracy vs proportion of data corrupted for the two methods.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
 </section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<p>We show how we can take the outlines of leaves parametrized into a 1D time series, and apply time series classification methods to them to classify the leaves by species. We compare two different methods of time series classification, namely Dynamic Time Warping and Shapelets Transform based on their accuracy and their resilience to missing data points. We learned that while the shapelets method is more accurate in classifying leaves, it is more vulnerable to missing data points which could occur due to measurement error compared to the DTW method that is more robust but is far more inaccurate in classifying leaves. Further work in this could focus on applying this method to other classification exercises that place more significance to the shape of objects compared to any other feature.</p>
+</section>
+<section id="references" class="level2 unnumbered">
+
+
 </section>
 
 <div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
