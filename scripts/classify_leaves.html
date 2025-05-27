@@ -251,14 +251,14 @@ Figure&nbsp;1: Bar plot of accuracy as the number of neighbors considered increa
 </details>
 </div>
 <p>The hyperparameter to optimize here is the number of shapelets per class which can be interpreted in the terms of PCA as the number of features you need to extract from the data to define a class archetype. As seen in the figure below, the accuracy of the shapelets method increases as we increase the number of shapelets per class. While setting the maximum shapelets per class to be as high as possible would seem to also maximize the accuracy, we also observe from the figure that the increase in accuracy slows down after 3 shapelets per class. This means that we only require 3 features per class to classify our test data which are subsequences 20 timesteps long. This points to the advantage of shapelets over DTW in that we can identify the most significant subsequences for classification instead of having to take the entire subsequence everytime. This saves on computation as when running the code, the DTW classifier runs significantly longer than the shapelets classifier.</p>
-<div id="cell-fig-stune" class="cell" data-execution_count="5">
+<div id="cell-fig-stune" class="cell" data-execution_count="15">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>plt.bar(s_class,s_accuracy, color <span class="op">=</span> <span class="st">'gray'</span>)<span class="op">;</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>plt.xticks(s_class)<span class="op">;</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Shapelets per class"</span>)<span class="op">;</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Accuracy"</span>)<span class="op">;</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>plt.savefig(<span class="st">'../results/shapelet_clas_accuracy.png'</span>, bbox_inches<span class="op">=</span><span class="st">'tight'</span>, dpi<span class="op">=</span><span class="dv">600</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>plt.savefig(<span class="st">'../results/shapelet_class_accuracy.png'</span>, bbox_inches<span class="op">=</span><span class="st">'tight'</span>, dpi<span class="op">=</span><span class="dv">600</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-stune" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -295,7 +295,7 @@ Figure&nbsp;2: Bar plot of accuracy as the number of shapelets pre class increas
 </details>
 </div>
 <p>To compare the two classifiers, we first look at their confusion matrix which is a matrix that tells us how many predicted labels match the true labels for each class. From our results, we can already see that the shapelets transform method has higher accuracy with fewer wrong predictions compared to the DTW method that makes more frequent errors in classifying the different leaves. It should be noted that both methods struggle in identifying leaves belonging to class 6 which is the California Black Oak. This could be due to the outline of the leaves sharing many similar features with the other plant species.</p>
-<div id="cell-fig-cm" class="cell" data-execution_count="8">
+<div id="cell-fig-cm" class="cell" data-execution_count="16">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">5</span>))</span>
@@ -310,7 +310,9 @@ Figure&nbsp;2: Bar plot of accuracy as the number of shapelets pre class increas
 <span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>shp_cm_display <span class="op">=</span> ConfusionMatrixDisplay(shp_cm, display_labels <span class="op">=</span> classes).plot(ax<span class="op">=</span>axes[<span class="dv">1</span>], cmap<span class="op">=</span><span class="st">'Greens'</span>, colorbar<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="ss">f"Dynamic Time Warping. Accuracy: </span><span class="sc">{</span>dtw_acc<span class="sc">:.3f}</span><span class="ss">"</span>)<span class="op">;</span></span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="ss">f"Shapelet Transform. Accuracy: </span><span class="sc">{</span>shp_acc<span class="sc">:.3f}</span><span class="ss">"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="ss">f"Shapelet Transform. Accuracy: </span><span class="sc">{</span>shp_acc<span class="sc">:.3f}</span><span class="ss">"</span>)<span class="op">;</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>fig.savefig(<span class="st">'confusion_matrix_comparison.png'</span>, bbox_inches<span class="op">=</span><span class="st">'tight'</span>, dpi<span class="op">=</span><span class="dv">600</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-cm" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -358,7 +360,7 @@ Figure&nbsp;3: Confusion matrix of the two different classification methods.
 </details>
 </div>
 <p>Looking at the plots, we notice that the Shapelet Transform method falls off sharply as the proportion of data corrupted increases while the decrease in accuracy for DTW is slower. This is because our method for corrupting the signal amounts to removing portions of the signal which affects each method differently. For the shapelets method, removing portions of the signal is tantamount to removing features from the signal which could be significant in differentiating between different classes. On the other hand, the DTW method does not differentiate between signal and noise and so the removal of parts of the raw signal is likely to remove equal amounts of true signal and noise which would not affect the distance measured using DTW much. This eventually decreases the accuracy as at the limit of the entire signal being removed, the classification becomes a measure of amplitude which is equal for all test data and is tantamount to a random selection.</p>
-<div id="cell-fig-noise" class="cell" data-execution_count="13">
+<div id="cell-fig-noise" class="cell" data-execution_count="17">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">5</span>))</span>
@@ -373,7 +375,9 @@ Figure&nbsp;3: Confusion matrix of the two different classification methods.
 <span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="st">"Proportion of data corrupted"</span>)</span>
 <span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"Accuracy"</span>)</span>
 <span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylim(<span class="dv">0</span>,<span class="dv">1</span>)</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Shapelet Transform"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Shapelet Transform"</span>)<span class="op">;</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>fig.savefig(<span class="st">'corruption_accuracy_comparison.png'</span>, bbox_inches<span class="op">=</span><span class="st">'tight'</span>, dpi<span class="op">=</span><span class="dv">600</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-noise" class="quarto-float quarto-figure quarto-figure-center anchored">
