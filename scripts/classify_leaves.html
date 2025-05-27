@@ -208,13 +208,14 @@ div.csl-indent {
 </details>
 </div>
 <p>For this method we need to tune a hyper-parameter for this classifier which is the kth nearest neighbor to consider. We can see from the plot that the accuracy actually goes down as we increase k which is due to the fact that DTW uses the whole signal when comparing sequences. This means that any noise present within the signal has the same significance as the actual signal which makes the method sensitive to noise.</p>
-<div id="cell-fig-ktune" class="cell" data-execution_count="3">
+<div id="cell-fig-ktune" class="cell" data-execution_count="14">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>plt.bar(n_neigh,n_accuracy, color <span class="op">=</span> <span class="st">'gray'</span>)<span class="op">;</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>plt.xticks(n_neigh)<span class="op">;</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Number of neighbors considered"</span>)<span class="op">;</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Accuracy"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Accuracy"</span>)<span class="op">;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>plt.savefig(<span class="st">'../results/k_neighbor_accuracy.png'</span>, bbox_inches<span class="op">=</span><span class="st">'tight'</span>, dpi<span class="op">=</span><span class="dv">600</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-ktune" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -256,7 +257,8 @@ Figure&nbsp;1: Bar plot of accuracy as the number of neighbors considered increa
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>plt.bar(s_class,s_accuracy, color <span class="op">=</span> <span class="st">'gray'</span>)<span class="op">;</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>plt.xticks(s_class)<span class="op">;</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Shapelets per class"</span>)<span class="op">;</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Accuracy"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Accuracy"</span>)<span class="op">;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>plt.savefig(<span class="st">'../results/shapelet_clas_accuracy.png'</span>, bbox_inches<span class="op">=</span><span class="st">'tight'</span>, dpi<span class="op">=</span><span class="dv">600</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
 <div id="fig-stune" class="quarto-float quarto-figure quarto-figure-center anchored">
