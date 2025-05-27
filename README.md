@@ -1,6 +1,6 @@
 ## Physics 215 Project
-Author: Kelvin Bartilad
-Topic: Classifying leaves using Dynamic Time Warping and Shapelets Transformation
+- Author: Kelvin Bartilad
+- Topic: Classifying leaves using Dynamic Time Warping and Shapelets Transformation
 
 ## How to replicate the work
 1. Clone this repo.
